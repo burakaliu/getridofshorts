@@ -5,7 +5,8 @@
   "description": "those godd*m shorts are too addicting",
   "permissions": [
     "webNavigation",
-    "tabs"
+    "tabs",
+    "storage"
   ],
   "host_permissions": [
     "*://*.youtube.com/*"
@@ -20,5 +21,8 @@
   "icons": {
     "48": "icon48.png",
     "128": "icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html"
   }
 }

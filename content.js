@@ -1,77 +1,75 @@
-console.log('Content script loaded and initialized');
+console.log('Content script loaded');
 
-// Function to check if current URL is a Shorts URL
-function isShortUrl() {
-  return window.location.href.includes('/shorts/');
+// Extension state
+let isEnabled = true;
+
+// CSS selectors for Shorts-related elements
+const shortsSelectors = [
+    'a[href*="/shorts"]',  // Shorts links
+    'ytd-reel-shelf-renderer',  // Shorts shelf in home page
+    'ytd-mini-guide-entry-renderer a[title="Shorts"]',  // Shorts in mini guide
+    'ytd-guide-entry-renderer a[title="Shorts"]',  // Shorts in main guide
+    '[is-shorts]',  // Elements marked as Shorts
+    'ytd-rich-grid-row ytd-rich-item-renderer:has(a[href*="/shorts"])',  // Grid items that are Shorts
+    '[page-subtype="shorts"]'  // Shorts page elements
+];
+
+// Function to hide Shorts elements
+function hideShorts() {
+    shortsSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(element => {
+            element.style.display = 'none';
+        });
+    });
 }
 
-// Hide Shorts-related elements from the YouTube interface
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('DOM Content Loaded event fired');
-
-  // Function to hide Shorts elements
-  function hideShorts() {
-    console.log('Running hideShorts function...');
-
-    // Hide Shorts tab in navigation
-    const shortsTab = document.querySelector('a[title="Shorts"], ytd-guide-entry-renderer[title="Shorts"]');
-    if (shortsTab) {
-      console.log('Found Shorts tab in navigation, hiding it');
-      shortsTab.style.display = 'none';
-    } else {
-      console.log('Shorts tab not found in navigation');
+// Load initial state
+chrome.storage.sync.get(['enabled'], (result) => {
+    isEnabled = result.enabled === undefined ? true : result.enabled;
+    if (isEnabled) {
+        hideShorts();
     }
+});
 
-    // Hide Shorts in recommendations
-    const shortsElements = document.querySelectorAll('a[href*="/shorts/"], ytd-reel-shelf-renderer');
-    console.log(`Found ${shortsElements.length} Shorts elements in recommendations`);
+// Notify that content script is ready
+chrome.runtime.sendMessage({ type: 'CONTENT_SCRIPT_READY' });
 
-    shortsElements.forEach((element, index) => {
-      const container = element.closest('ytd-video-renderer, ytd-rich-item-renderer, ytd-reel-item-renderer, ytd-shelf-renderer');
-      if (container) {
-        console.log(`Hiding Shorts container ${index + 1}`);
-        container.style.display = 'none';
-      }
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.enabled !== undefined) {
+        isEnabled = message.enabled;
+        if (isEnabled) {
+            hideShorts();
+        } else {
+            // Show all hidden shorts
+            shortsSelectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(element => {
+                    element.style.display = '';
+                });
+            });
+        }
+    }
+    // Always send a response to confirm message was received
+    sendResponse({ received: true });
+    return true; // Keep the message channel open for async response
+});
+
+// Create MutationObserver to handle dynamically loaded content
+const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length && isEnabled) {
+            hideShorts();
+        }
     });
-  }
+});
 
-  // Run initially after a short delay to ensure YouTube's content is loaded
-  setTimeout(() => {
-    console.log('Running initial hideShorts');
-    hideShorts();
-  }, 1000);
+// Start observing the document with the configured parameters
+observer.observe(document.body, {
+    childList: true,
+    subtree: true
+});
 
-  // Create an observer to handle dynamically loaded content
-  const observer = new MutationObserver((mutations) => {
-    console.log('Mutation observed, running hideShorts');
-    hideShorts();
-    
-    // Check if we're on a Shorts page and redirect
-    if (isShortUrl()) {
-      console.log('Shorts URL detected, redirecting...');
-      window.location.href = 'https://www.youtube.com';
-    }
-  });
-
-  // Monitor URL changes (for YouTube's SPA navigation)
-  const oldHref = window.location.href;
-  const bodyObserver = new MutationObserver(() => {
-    if (oldHref !== window.location.href) {
-      console.log('URL changed:', window.location.href);
-      if (isShortUrl()) {
-        console.log('Shorts URL detected after navigation, redirecting...');
-        window.location.href = 'https://www.youtube.com';
-      }
-      hideShorts();
-    }
-  });
-
-  // Start observing with a delay to ensure YouTube's content is loaded
-  setTimeout(() => {
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
-    console.log('MutationObserver started');
-  }, 1500);
+// Clean up observer when the page is unloaded
+window.addEventListener('unload', () => {
+    observer.disconnect();
 });
