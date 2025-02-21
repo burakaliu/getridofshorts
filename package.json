@@ -1,0 +1,13 @@
+{
+  "name": "getridofshorts",
+  "version": "1.0.0",
+  "description": "Chrome extension to remove YouTube Shorts",
+  "scripts": {
+    "build": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.3.0",
+    "postcss": "^8.4.23",
+    "autoprefixer": "^10.4.14"
+  }
+}

@@ -55,3 +55,24 @@ input:checked + .slider {
 input:checked + .slider:before {
   transform: translateX(26px);
 }
+
+.duration-container {
+  margin-top: 15px;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+
+.duration-container select {
+  width: 100%;
+  margin: 8px 0;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.timer {
+  text-align: center;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #666;
+}
