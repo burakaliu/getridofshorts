@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "getridofshorts",
-  "version": "1.0",
-  "description": "those godd*m shorts are too addicting",
+  "version": "1.1",
+  "description": "Completely remove YouTube Shorts from your feed – Stay Focused & Remove the Junk!",
   "permissions": [
     "webNavigation",
     "tabs",
